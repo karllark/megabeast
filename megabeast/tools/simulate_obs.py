@@ -128,10 +128,10 @@ def simulate_obs(
     vstack(simtable_list).write(output_catalog, overwrite=True)
 
 
-if __name__ == "__main__":  # pragma: no cover
-
+def main():
     # commandline parser
     parser = argparse.ArgumentParser()
+
     parser.add_argument(
         "--physgrid_list",
         "-p",
@@ -198,7 +198,7 @@ if __name__ == "__main__":  # pragma: no cover
     # run observation simulator
     simulate_obs(
         args.physgrid_list,
-        args.noise_model_lists,
+        args.noise_model_list,
         args.output_catalog,
         beastinfo_list=args.beastinfo_list,
         nsim=args.nsim,
@@ -208,3 +208,8 @@ if __name__ == "__main__":  # pragma: no cover
         weight_to_use=args.weight_to_use,
         ranseed=args.ranseed,
     )
+
+
+if __name__ == "__main__":  # pragma: no cover
+
+    main()
