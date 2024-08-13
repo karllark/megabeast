@@ -26,7 +26,7 @@ class MB_Model:
         #   uses the same format as the beast priors = megabeast physics model
         # --> needs to be generalized to also handle stellar parameters
         #     define a dict that translates between mb params and physical models
-        self.params = ["logA", "M_ini", "Av", "Rv", "fA"]
+        self.params = ["logA", "M_ini", "Av", "Rv", "f_A"]
         self.physics_model = {}
         print(self.params)
         print(self.star_model.keys())
@@ -66,7 +66,7 @@ class MB_Model:
                     self.physics_model[cparam]
                 )
 
-        # variable to control if N stars detected is computed
+        # variable to control if N stars is computed
         #   not done of SFH is fixed
         if self.physics_model["logA"]["prior"]["name"] == "fixed":
             self.compute_N_stars = False
@@ -75,7 +75,7 @@ class MB_Model:
 
         # variable to allow for the computation of the mass mulitplier for each
         # age, mass, met to be done only once if the IMF is fixed
-        #    must be True so during the 1st call to lnlike it is computed for all cases
+        #    must be True so during the 1st call to lnlike, it is computed for all cases
         self.compute_massmult = True
         self.massmultipliers = None
 
@@ -313,7 +313,6 @@ def _get_best_fit_params(sampler):
     nwalkers, nsteps = sampler.lnprobability.shape
     for k in range(nwalkers):
         tmax_lnp = np.nanmax(sampler.lnprobability[k])
-        print(tmax_lnp)
         if tmax_lnp > max_lnp:
             max_lnp = tmax_lnp
             (indxs,) = np.where(sampler.lnprobability[k] == tmax_lnp)

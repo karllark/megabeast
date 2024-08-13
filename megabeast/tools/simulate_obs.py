@@ -10,7 +10,14 @@ from beast.observationmodel.vega import Vega
 from beast.physicsmodel.grid import SEDGrid
 from beast.physicsmodel.priormodel import PriorAgeModel, PriorMassModel
 from beast.physicsmodel.grid_weights_stars import compute_bin_boundaries
+from beast.physicsmodel.grid_and_prior_weights import (
+    compute_distance_age_mass_metallicity_weights,
+    compute_av_rv_fA_prior_weights,
+)
 import beast.observationmodel.noisemodel.generic_noisemodel as noisemodel
+
+from megabeast.mbsettings import mbsettings
+from megabeast.singlepop_dust_model import MB_Model
 
 from astropy.table import vstack
 
@@ -267,6 +274,7 @@ def simulate_obs(
     noise_model_list,
     output_catalog,
     beastinfo_list=None,
+    ensembleparams=None,
     nsim=100,
     compl_filter="max",
     complcut=None,
@@ -297,6 +305,12 @@ def simulate_obs(
         from this model to use to compute the number of stars to simulate. If
         there are multiple files for physgrid_list (because of subgrids), list
         the beast info files associated with each physics model file.
+        Cannot be used at the same time as ensembleparams.
+
+    ensembleparams: string
+        Name of file with parameters for the megabeast physics model.  Uses
+        the same dictonary format as the megabeast settings file.  Cannot be
+        used at the same time as the beastinfo_list.
 
     n_sim : int (default=100)
         Number of simulated objects to create if beastinfo_list is not given. If
@@ -323,6 +337,10 @@ def simulate_obs(
     ranseed : int
         seed for random number generator
     """
+    if (beastinfo_list is not None) & (ensembleparams is not None):
+        print("beastinfo_list and ensembleparams cannot be set")
+        exit()
+
     # numbers of samples to do
     # (ensure there are enough for even sampling of multiple model grids)
     n_phys = len(np.atleast_1d(physgrid_list))
@@ -360,12 +378,55 @@ def simulate_obs(
             age_prior_model = None
             mass_prior_model = None
 
+        # update the prior_weights if ensembleparams is set
+        if ensembleparams is not None:
+            # read the parameters into a class
+            mbparams = mbsettings(ensembleparams)
+
+            mbmod = MB_Model(mbparams)
+
+            # mock up a beast spectral grid so that the BEAST code can be used
+            cur_physmod = Table()
+            for cparam in ["logA", "M_ini", "Z", "distance", "Av", "Rv", "f_A"]:
+                cur_physmod[cparam] = modelsedgrid.grid[cparam]
+            n_mods = len(cur_physmod["logA"])
+            for cparam in ["grid_weight", "prior_weight", "weight"]:
+                cur_physmod[cparam] = np.full(n_mods, 1.0)
+
+            print("computing megabeast ensemble physics model (replaces beast priors)")
+
+            dust_prior = compute_av_rv_fA_prior_weights(
+                cur_physmod["Av"],
+                cur_physmod["Rv"],
+                cur_physmod["f_A"],
+                cur_physmod["distance"],
+                av_prior_model=mbmod.physics_model["Av"],
+                rv_prior_model=mbmod.physics_model["Rv"],
+                fA_prior_model=mbmod.physics_model["f_A"],
+            )
+
+            compute_distance_age_mass_metallicity_weights(
+                cur_physmod,
+                distance_prior_model={"name": "flat"},
+                age_prior_model=mbmod.physics_model["logA"]["model"],
+                mass_prior_model=mbmod.physics_model["M_ini"]["model"],
+                met_prior_model={"name": "flat"},
+            )
+
+            cur_physmod["prior_weight"] *= dust_prior
+
+            modelsedgrid.grid["prior_weight"] = cur_physmod["prior_weight"].data
+            modelsedgrid.grid["grid_weight"] = cur_physmod["grid_weight"].data
+            modelsedgrid.grid["weight"] = (
+                modelsedgrid.grid["prior_weight"] * modelsedgrid.grid["grid_weight"]
+            )
+
         # generate the table
         simtable = gen_SimObs_from_sedgrid(
             modelsedgrid,
             noisegrid,
-            age_prior_model=age_prior_model,
-            mass_prior_model=mass_prior_model,
+            #age_prior_model=age_prior_model,
+            #mass_prior_model=mass_prior_model,
             nsim=samples_per_grid,
             compl_filter=compl_filter,
             complcut=complcut,
@@ -413,6 +474,7 @@ def main():
         nargs="+",
         help="filename(s) of beast info file(s)",
     )
+    parser.add_argument("--ensembleparams", help="ensemble parameters file")
     parser.add_argument(
         "--nsim", default=100, type=int, help="number of simulated objects"
     )
@@ -451,6 +513,7 @@ def main():
         args.noise_model_list,
         args.output_catalog,
         beastinfo_list=args.beastinfo_list,
+        ensembleparams=args.ensembleparams,
         nsim=args.nsim,
         compl_filter=args.compl_filter,
         complcut=args.complcut,

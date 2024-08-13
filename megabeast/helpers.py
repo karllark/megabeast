@@ -30,7 +30,7 @@ def get_likelihoods(ppdf_file, beast_model_data):
     # BEAST saves posterior PDFs labeled as log(pPDF)
     lnpdata = read_lnp_data(ppdf_file)
 
-    # divide by the BEAST prior weights to return to recover the likelihoods
+    # divide by the BEAST prior weights to recover the likelihoods
     n_lnps, n_stars = lnpdata["indxs"].shape
     for i in range(n_stars):
         indxs = lnpdata["indxs"][:, i]
