@@ -11,7 +11,6 @@ from beast.physicsmodel.grid import SEDGrid
 from beast.physicsmodel.priormodel import PriorAgeModel, PriorMassModel
 from beast.physicsmodel.grid_weights_stars import compute_bin_boundaries
 import beast.observationmodel.noisemodel.generic_noisemodel as noisemodel
-#from beast.observationmodel.observations import gen_SimObs_from_sedgrid
 
 from astropy.table import vstack
 
@@ -201,7 +200,9 @@ def gen_SimObs_from_sedgrid(
         compl_indx = model_compl[totsim_indx] >= compl_choice
         sim_indx = totsim_indx[compl_indx]
         totcompsimmass = np.sum(sedgrid["M_ini"][sim_indx])
-        print(f"number of simulated stars w/ completeness = {len(sim_indx)}; mass = {totcompsimmass}")
+        print(
+            f"number of simulated stars w/ completeness = {len(sim_indx)}; mass = {totcompsimmass}"
+        )
 
     else:  # total number of stars to simulate set by command line input
 
@@ -424,13 +425,13 @@ def main():
         "--complcut",
         default=None,
         type=float,
-        help="completeness cut for selecting seds above the completeness cut"
+        help="completeness cut for selecting seds above the completeness cut",
     )
     parser.add_argument(
         "--magcut",
         default=None,
         type=float,
-        help="magnitdue cut for selecting seds brighter than the magcut in compl_filter"
+        help="magnitdue cut for selecting seds brighter than the magcut in compl_filter",
     )
     parser.add_argument(
         "--weight_to_use",
@@ -440,10 +441,7 @@ def main():
         'grid_weight' to choose the weighting for SED selection.""",
     )
     parser.add_argument(
-        "--ranseed",
-        default=None,
-        type=int,
-        help="seed for random number generator"
+        "--ranseed", default=None, type=int, help="seed for random number generator"
     )
     args = parser.parse_args()
 

@@ -14,7 +14,8 @@ using the `mb_simulate_obs` command once the megabeast has been installed.
 Simulations require already created BEAST physics and observation model grids.
 
 The physics model grid includes the ensemble parameters as these are the same as
-the BEAST :ref:`beast_priors`. The module uses already created BEAST physics and
+the BEAST (see `beast priors <https://beast.readthedocs.io/en/latest/beast_priors.html>`_).
+The module uses already created BEAST physics and
 observation model grids by sampling the full nD prior function that is part of
 the physics model grid.  The observation model grid provides the information on
 the flux uncertainties and biases as well as the completeness.
