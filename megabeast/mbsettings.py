@@ -51,7 +51,7 @@ class mbsettings:
                 del input_data[i]
 
         # parse it into a dictionary
-        beast_params = {}
+        mbbeast_params = {}
 
         for i in range(len(input_data)):
             # execute imports
@@ -63,11 +63,18 @@ class mbsettings:
                 param = input_data[i].split("=")[0].strip()
                 # exec the string to get parameter values accessible
                 exec(input_data[i])
-                beast_params[param] = eval(param)
+                mbbeast_params[param] = eval(param)
+
+        self.dict_to_attr(mbbeast_params)
+
+    def dict_to_attr(self, mbbeast_params):
+        """
+        Set the class attributes based on a dictonary
+        """
 
         # turn dictionary into attributes
-        for key in beast_params:
-            setattr(self, key, beast_params[key])
+        for key in mbbeast_params:
+            setattr(self, key, mbbeast_params[key])
 
     def verify(self):
         """

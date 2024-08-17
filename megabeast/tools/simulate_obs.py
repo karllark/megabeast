@@ -25,7 +25,7 @@ from astropy.table import vstack
 def gen_SimObs_from_sedgrid(
     sedgrid,
     sedgrid_noisemodel,
-    nsim=100,
+    nsim=0,
     compl_filter="max",
     complcut=None,
     magcut=None,
@@ -149,6 +149,7 @@ def gen_SimObs_from_sedgrid(
     # total number of stars to simulate
     model_indx = np.arange(n_models)
     if (age_prior_model is not None) and (mass_prior_model is not None):
+        print("determining the number of simulated stars from age and mass priors")
         nsim = 0
         # logage_range = [min(sedgrid["logA"]), max(sedgrid["logA"])]
         mass_range = [min(sedgrid["M_ini"]), max(sedgrid["M_ini"])]
@@ -275,7 +276,7 @@ def simulate_obs(
     output_catalog,
     beastinfo_list=None,
     ensembleparams=None,
-    nsim=100,
+    nsim=0,
     compl_filter="max",
     complcut=None,
     magcut=None,
@@ -374,6 +375,13 @@ def simulate_obs(
                 binfo = af.tree
                 age_prior_model = binfo["age_prior_model"]
                 mass_prior_model = binfo["mass_prior_model"]
+        elif ensembleparams is not None:
+            if nsim > 0:
+                age_prior_model = None
+                mass_prior_model = None
+            else:
+                age_prior_model=mbmod.physics_model["logA"],
+                mass_prior_model=mbmod.physics_model["M_ini"],
         else:
             age_prior_model = None
             mass_prior_model = None
@@ -425,8 +433,8 @@ def simulate_obs(
         simtable = gen_SimObs_from_sedgrid(
             modelsedgrid,
             noisegrid,
-            #age_prior_model=age_prior_model,
-            #mass_prior_model=mass_prior_model,
+            age_prior_model=age_prior_model,
+            mass_prior_model=mass_prior_model,
             nsim=samples_per_grid,
             compl_filter=compl_filter,
             complcut=complcut,
@@ -476,7 +484,7 @@ def main():
     )
     parser.add_argument("--ensembleparams", help="ensemble parameters file")
     parser.add_argument(
-        "--nsim", default=100, type=int, help="number of simulated objects"
+        "--nsim", default=0, type=int, help="number of simulated objects"
     )
     parser.add_argument(
         "--compl_filter",
