@@ -375,13 +375,6 @@ def simulate_obs(
                 binfo = af.tree
                 age_prior_model = binfo["age_prior_model"]
                 mass_prior_model = binfo["mass_prior_model"]
-        elif ensembleparams is not None:
-            if nsim > 0:
-                age_prior_model = None
-                mass_prior_model = None
-            else:
-                age_prior_model=mbmod.physics_model["logA"],
-                mass_prior_model=mbmod.physics_model["M_ini"],
         else:
             age_prior_model = None
             mass_prior_model = None
@@ -392,6 +385,13 @@ def simulate_obs(
             mbparams = mbsettings(ensembleparams)
 
             mbmod = MB_Model(mbparams)
+
+            if nsim > 0:
+                age_prior_model = None
+                mass_prior_model = None
+            else:
+                age_prior_model=mbmod.physics_model["logA"],
+                mass_prior_model=mbmod.physics_model["M_ini"],
 
             # mock up a beast spectral grid so that the BEAST code can be used
             cur_physmod = Table()
