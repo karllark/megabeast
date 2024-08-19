@@ -390,8 +390,8 @@ def simulate_obs(
                 age_prior_model = None
                 mass_prior_model = None
             else:
-                age_prior_model=mbmod.physics_model["logA"],
-                mass_prior_model=mbmod.physics_model["M_ini"],
+                age_prior_model = (mbmod.physics_model["logA"],)
+                mass_prior_model = (mbmod.physics_model["M_ini"],)
 
             # mock up a beast spectral grid so that the BEAST code can be used
             cur_physmod = Table()
