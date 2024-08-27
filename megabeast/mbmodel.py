@@ -9,18 +9,18 @@ from beast.physicsmodel.priormodel import PriorDustModel as PhysDustModel
 
 from megabeast.helpers import precompute_mass_multipliers, get_predicted_num_stars
 
-__all__ = ["MB_Model", "fit_ensemble"]
+__all__ = ["MBModel", "fit_ensemble"]
 
 
-class MB_Model:
+class MBModel:
     """
     MegaBEAST model that provides member functions to compute
     the likelihood and priors for a specific physical model
     """
 
-    def __init__(self, params):
-        self.star_model = params.stellar_model
-        self.dust_model = params.fd_model
+    def __init__(self, stellar_model, dust_model):
+        self.star_model = stellar_model
+        self.dust_model = dust_model
 
         # setup the physics model for the beast parameters
         #   uses the same format as the beast priors = megabeast physics model

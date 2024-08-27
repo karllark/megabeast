@@ -16,10 +16,12 @@ from beast.physicsmodel.grid_and_prior_weights import (
 )
 import beast.observationmodel.noisemodel.generic_noisemodel as noisemodel
 
-from megabeast.mbsettings import mbsettings
-from megabeast.singlepop_dust_model import MB_Model
+from megabeast.helpers import read_mbmodel
+from megabeast.mbmodel import MBModel
 
 from astropy.table import vstack
+
+__all__ = ["gen_SimObs_from_sedgrid", "simulate_obs"]
 
 
 def gen_SimObs_from_sedgrid(
@@ -275,7 +277,7 @@ def simulate_obs(
     noise_model_list,
     output_catalog,
     beastinfo_list=None,
-    ensembleparams=None,
+    mbmodel=None,
     nsim=0,
     compl_filter="max",
     complcut=None,
@@ -306,12 +308,11 @@ def simulate_obs(
         from this model to use to compute the number of stars to simulate. If
         there are multiple files for physgrid_list (because of subgrids), list
         the beast info files associated with each physics model file.
-        Cannot be used at the same time as ensembleparams.
+        Cannot be used at the same time as mbmodel.
 
-    ensembleparams: string
-        Name of file with parameters for the megabeast physics model.  Uses
-        the same dictonary format as the megabeast settings file.  Cannot be
-        used at the same time as the beastinfo_list.
+    mbmodel: megabeast.MBModel
+        MegaBEAST model that provides a full ensemble physics model.
+        Cannot be used at the same time as the beastinfo_list.
 
     n_sim : int (default=100)
         Number of simulated objects to create if beastinfo_list is not given. If
@@ -338,8 +339,8 @@ def simulate_obs(
     ranseed : int
         seed for random number generator
     """
-    if (beastinfo_list is not None) & (ensembleparams is not None):
-        print("beastinfo_list and ensembleparams cannot be set")
+    if (beastinfo_list is not None) & (mbmodel is not None):
+        print("beastinfo_list and mbmodel cannot be set")
         exit()
 
     # numbers of samples to do
@@ -379,19 +380,15 @@ def simulate_obs(
             age_prior_model = None
             mass_prior_model = None
 
-        # update the prior_weights if ensembleparams is set
-        if ensembleparams is not None:
-            # read the parameters into a class
-            mbparams = mbsettings(ensembleparams)
-
-            mbmod = MB_Model(mbparams)
+        # update the prior_weights if mbmodel is set
+        if mbmodel is not None:
 
             if nsim > 0:
                 age_prior_model = None
                 mass_prior_model = None
             else:
-                age_prior_model = (mbmod.physics_model["logA"],)
-                mass_prior_model = (mbmod.physics_model["M_ini"],)
+                age_prior_model = (mbmodel.physics_model["logA"],)
+                mass_prior_model = (mbmodel.physics_model["M_ini"],)
 
             # mock up a beast spectral grid so that the BEAST code can be used
             cur_physmod = Table()
@@ -408,16 +405,16 @@ def simulate_obs(
                 cur_physmod["Rv"],
                 cur_physmod["f_A"],
                 cur_physmod["distance"],
-                av_prior_model=mbmod.physics_model["Av"],
-                rv_prior_model=mbmod.physics_model["Rv"],
-                fA_prior_model=mbmod.physics_model["f_A"],
+                av_prior_model=mbmodel.physics_model["Av"],
+                rv_prior_model=mbmodel.physics_model["Rv"],
+                fA_prior_model=mbmodel.physics_model["f_A"],
             )
 
             compute_distance_age_mass_metallicity_weights(
                 cur_physmod,
                 distance_prior_model={"name": "flat"},
-                age_prior_model=mbmod.physics_model["logA"]["model"],
-                mass_prior_model=mbmod.physics_model["M_ini"]["model"],
+                age_prior_model=mbmodel.physics_model["logA"]["model"],
+                mass_prior_model=mbmodel.physics_model["M_ini"]["model"],
                 met_prior_model={"name": "flat"},
             )
 
@@ -515,13 +512,20 @@ def main():
     )
     args = parser.parse_args()
 
+    # read in the megabeast model if supplied
+    if args.mbmodel:
+        params = read_mbmodel(args.mbmodel)
+        mbmodel = MBModel(params.stellar_model, params.dust_model)
+    else:
+        mbmodel = None
+
     # run observation simulator
     simulate_obs(
         args.physgrid_list,
         args.noise_model_list,
         args.output_catalog,
         beastinfo_list=args.beastinfo_list,
-        ensembleparams=args.ensembleparams,
+        mbmodel=mbmodel,
         nsim=args.nsim,
         compl_filter=args.compl_filter,
         complcut=args.complcut,

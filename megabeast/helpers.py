@@ -5,11 +5,61 @@ from beast.tools.read_beast_data import read_lnp_data
 from beast.physicsmodel.grid_weights_stars import compute_bin_boundaries
 
 __all__ = [
+    "read_mbmodel",
     "get_likelihoods",
     "precompute_mass_multipliers",
     "get_predicted_num_stars",
     "get_predicted_num_stars_simulate",
 ]
+
+
+def read_mbmodel(settings_file):
+    """
+    Read in the settings file and set parameters
+
+    Parameters
+    ----------
+    settings_file : string
+        filename that has the stellar_model and dust_model dictionaries
+    """
+
+    # read everything in as strings
+    with open(settings_file, "r") as f:
+        temp_data = f.readlines()
+    # remove empty lines and comments
+    input_data = [
+        line.strip()
+        for line in temp_data
+        if line.strip() != "" and line.strip()[0] != "#"
+    ]
+    # remove comments that are mid-line (e.g., "x = 5 #comment")
+    for i, line in enumerate(input_data):
+        try:
+            input_data[i] = line[: line.index("#")]
+        except ValueError:
+            pass
+    # if parameters are defined over multiple lines, combine lines
+    for i in reversed(range(len(input_data))):
+        if ("import " not in input_data[i]) and ("=" not in input_data[i]):
+            input_data[i - 1] += input_data[i]
+            del input_data[i]
+
+    # parse it into a dictionary
+    params = {}
+
+    for i in range(len(input_data)):
+        # execute imports
+        if "import " in input_data[i]:
+            exec(input_data[i])
+
+        # extract parameter and value (as strings)
+        else:
+            param = input_data[i].split("=")[0].strip()
+            # exec the string to get parameter values accessible
+            exec(input_data[i])
+            params[param] = eval(param)
+
+    return params
 
 
 def get_likelihoods(ppdf_file, beast_model_data):
