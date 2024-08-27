@@ -1,6 +1,7 @@
 import astropy.units as u
 from megabeast.mbmodel import MBModel
 
+
 def test_mbmodel_init():
 
     # stellar population model
@@ -20,21 +21,21 @@ def test_mbmodel_init():
             "varnames": ["slope"],
             "varinit": [2.35],
             "prior": {
-            "name": "flat",
-            "minmax": [[2.0, 3.0]],
-            }
+                "name": "flat",
+                "minmax": [[2.0, 3.0]],
+            },
         },
         "Z": {
             "name": "flat",
-        },    
+        },
         "distance": {
             "name": "absexponential",
             "varnames": ["dist0", "tau", "amp"],
-            "varinit": [60.0 * u.kpc, 5. * u.kpc, 1.0],
+            "varinit": [60.0 * u.kpc, 5.0 * u.kpc, 1.0],
             "prior": {
                 "name": "flat",
                 "minmax": [[50.0, 3.0, 0.9], [70.0, 7.0, 1.1]],
-            }
+            },
         },
     }
 
@@ -67,7 +68,7 @@ def test_mbmodel_init():
                 "name": "flat",
                 "minmax": [[0.0, 1.0], [0.05, 0.5]],
             },
-        }
+        },
     }
 
     mod = MBModel(stellar_model, dust_model)
@@ -85,4 +86,6 @@ def test_mbmodel_init():
     for cparam in mod.physics_model.keys():
         assert cparam in expparam
         for csubparam in ["name", "model"]:
-            assert csubparam in mod.physics_model[cparam].keys(), f"required {csubparam} not found in {cparam}"
+            assert (
+                csubparam in mod.physics_model[cparam].keys()
+            ), f"required {csubparam} not found in {cparam}"
