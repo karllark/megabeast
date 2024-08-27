@@ -275,7 +275,7 @@ def gen_SimObs_from_sedgrid(
 def simulate_obs(
     physgrid_list,
     noise_model_list,
-    output_catalog,
+    output_catalog=None,
     beastinfo_list=None,
     mbmodel=None,
     nsim=0,
@@ -443,7 +443,11 @@ def simulate_obs(
         simtable_list.append(simtable)
 
     # stack all the tables into one and write it out
-    vstack(simtable_list).write(output_catalog, overwrite=True)
+    fincat = vstack(simtable_list)
+    if output_catalog is not None:
+        fincat.write(output_catalog, overwrite=True)
+
+    return fincat
 
 
 def main():
@@ -522,7 +526,7 @@ def main():
     simulate_obs(
         args.physgrid_list,
         args.noise_model_list,
-        args.output_catalog,
+        output_catalog=args.output_catalog,
         beastinfo_list=args.beastinfo_list,
         mbmodel=mbmodel,
         nsim=args.nsim,

@@ -68,11 +68,13 @@ class MBModel:
                         self.physics_model[cparam]
                     )
                 elif cparam == "distance":
-                     self.physics_model[cparam]["model"] = PhysDistanceModel(
+                    self.physics_model[cparam]["model"] = PhysDistanceModel(
                         self.physics_model[cparam]
-                    )                   
+                    )
                 else:
-                    raise NotImplementedError(f"{cparam} is not an allowed stellar model parameter")
+                    raise NotImplementedError(
+                        f"{cparam} is not an allowed stellar model parameter"
+                    )
             elif cparam in self.dust_model.keys():
                 self.physics_model[cparam]["nsubvars"] = 1
                 self.physics_model[cparam]["model"] = PhysDustModel(
