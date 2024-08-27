@@ -5,6 +5,8 @@ import emcee
 
 from beast.physicsmodel.priormodel import PriorAgeModel as PhysAgeModel
 from beast.physicsmodel.priormodel import PriorMassModel as PhysMassModel
+from beast.physicsmodel.priormodel import PriorMetallicityModel as PhysMetallicityModel
+from beast.physicsmodel.priormodel import PriorDistanceModel as PhysDistanceModel
 from beast.physicsmodel.priormodel import PriorDustModel as PhysDustModel
 
 from megabeast.helpers import precompute_mass_multipliers, get_predicted_num_stars
@@ -22,15 +24,9 @@ class MBModel:
         self.star_model = stellar_model
         self.dust_model = dust_model
 
-        # setup the physics model for the beast parameters
-        #   uses the same format as the beast priors = megabeast physics model
-        # --> needs to be generalized to also handle stellar parameters
-        #     define a dict that translates between mb params and physical models
-        self.params = ["logA", "M_ini", "Av", "Rv", "f_A"]
+        # setup the megabeast physics model for the beast parameters
+        self.params = ["logA", "M_ini", "Z", "distance", "Av", "Rv", "f_A"]
         self.physics_model = {}
-        print(self.params)
-        print(self.star_model.keys())
-        print(self.dust_model.keys())
         for cparam in self.params:
             if cparam in self.star_model.keys():
                 cmod = self.star_model[cparam]
@@ -40,15 +36,22 @@ class MBModel:
                 raise ValueError("requested parameter not in mbsetting file")
 
             self.physics_model[cparam] = {"name": cmod["name"]}
-            self.physics_model[cparam]["varnames"] = cmod["varnames"]
-            self.physics_model[cparam]["prior"] = cmod["prior"]
-            for cname, cval in zip(cmod["varnames"], cmod["varinit"]):
-                self.physics_model[cparam][cname] = cval
+            if "varnames" in cmod.keys():
+                self.physics_model[cparam]["varnames"] = cmod["varnames"]
+            else:
+                self.physics_model[cparam]["varnames"] = None
+            if "prior" in cmod.keys():
+                self.physics_model[cparam]["prior"] = cmod["prior"]
+            else:
+                self.physics_model[cparam]["prior"] = None
+            if self.physics_model[cparam]["varnames"] is not None:
+                for cname, cval in zip(cmod["varnames"], cmod["varinit"]):
+                    self.physics_model[cparam][cname] = cval
 
             # setup the physics model for this parameter
             if cparam in self.star_model.keys():
                 if cparam == "logA":
-                    self.physics_model[cparam]["x"] = self.star_model["x"]
+                    self.physics_model[cparam]["x"] = self.star_model[cparam]["x"]
                     self.physics_model[cparam]["nsubvars"] = len(
                         self.physics_model[cparam]["x"]
                     )
@@ -60,6 +63,16 @@ class MBModel:
                     self.physics_model[cparam]["model"] = PhysMassModel(
                         self.physics_model[cparam]
                     )
+                elif cparam == "Z":
+                    self.physics_model[cparam]["model"] = PhysMetallicityModel(
+                        self.physics_model[cparam]
+                    )
+                elif cparam == "distance":
+                     self.physics_model[cparam]["model"] = PhysDistanceModel(
+                        self.physics_model[cparam]
+                    )                   
+                else:
+                    raise NotImplementedError(f"{cparam} is not an allowed stellar model parameter")
             elif cparam in self.dust_model.keys():
                 self.physics_model[cparam]["nsubvars"] = 1
                 self.physics_model[cparam]["model"] = PhysDustModel(

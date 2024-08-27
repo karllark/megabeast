@@ -340,8 +340,7 @@ def simulate_obs(
         seed for random number generator
     """
     if (beastinfo_list is not None) & (mbmodel is not None):
-        print("beastinfo_list and mbmodel cannot be set")
-        exit()
+        raise Exception("beastinfo_list and mbmodel cannot both be set")
 
     # numbers of samples to do
     # (ensure there are enough for even sampling of multiple model grids)

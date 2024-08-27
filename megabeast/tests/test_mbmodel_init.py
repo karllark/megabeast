@@ -5,10 +5,9 @@ def test_mbmodel_init():
 
     # stellar population model
     stellar_model = {
-        "name": "bins_histo",
-        "x": [6.0, 7.0, 8.0, 9.0, 10.0],  # units are log(years)
         "logA": {  # star formation history SFH
             "name": "bins_histo",
+            "x": [6.0, 7.0, 8.0, 9.0, 10.0],  # units are log(years)
             "varnames": ["values"],
             "varinit": [[1e-8, 1e-8, 1e-8, 1e-8, 1e-8]],  # units are M_sun/year
             "prior": {
@@ -26,12 +25,7 @@ def test_mbmodel_init():
             }
         },
         "Z": {
-            "name": "bins_histo",
-            "init": [0.5, 0.5, 0.5, 0.5, 0.5, 0.5],
-            "prior": {
-                "name": "flat",
-                "minmax": [[0.0, 0.0, 0.0, 0.0, 0.0], [1.0, 1.0, 1.0, 1.0, 1.0]],
-            },
+            "name": "flat",
         },    
         "distance": {
             "name": "absexponential",
@@ -87,7 +81,7 @@ def test_mbmodel_init():
     assert isinstance(mod.compute_massmult, bool)
 
     # parameters expected
-    expparam = ["logA", "M_ini", "Av", "Rv", "f_A"]
+    expparam = ["logA", "M_ini", "Z", "distance", "Av", "Rv", "f_A"]
     for cparam in mod.physics_model.keys():
         assert cparam in expparam
         for csubparam in ["name", "model"]:
