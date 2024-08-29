@@ -1,11 +1,14 @@
 import numpy as np
 from numpy.random import default_rng
+import h5py
 
+from beast.physicsmodel.grid import SEDGrid
 from beast.tools.read_beast_data import read_lnp_data
 from beast.physicsmodel.grid_weights_stars import compute_bin_boundaries
 
 __all__ = [
     "read_mbmodel",
+    "read_beast_moddata",
     "get_likelihoods",
     "precompute_mass_multipliers",
     "get_predicted_num_stars",
@@ -60,6 +63,32 @@ def read_mbmodel(settings_file):
             params[param] = eval(param)
 
     return params
+
+
+def read_beast_moddata(physmodfile, obsmodfile, params):
+    """
+    Read in the BEAST model data.  Only read the physics and observation
+    information needed for the fitting.
+    """
+
+    # get the BEAST physics model info needed
+    #  using SEDGrid as it is faster than beast.tools.read_beast_data.read_sed_data
+    #  only read in the columns specifically needed
+    beast_moddata = {}
+    beast_physmod_param_list = params + ["prior_weight", "grid_weight"]
+
+    sgrid = SEDGrid(physmodfile, backend="disk")
+    for cparam in beast_physmod_param_list:
+        beast_moddata[cparam] = sgrid.grid[cparam]
+
+    # get the completeness from the BEAST observation model
+    #   use the maximum completeness across the bands as the correct obsmodel
+    #   would only have one completeness value per model
+    #   max is the best approximation for the toothpick model (maybe???  average??)
+    with h5py.File(obsmodfile, "r") as obs_hdf:
+        beast_moddata["completeness"] = np.max(obs_hdf["completeness"], axis=1)
+
+    return beast_moddata
 
 
 def get_likelihoods(ppdf_file, beast_model_data):
@@ -152,9 +181,7 @@ def precompute_mass_multipliers(bphysparams, physmodmass):
     }
 
 
-def get_predicted_num_stars(
-    massmult_info, bphysparams, bphysmod, physmodage
-):
+def get_predicted_num_stars(massmult_info, bphysparams, bphysmod, physmodage):
     """
     Calculate the expected number of stars based on the physics model as
     given on the BEAST model grid including completeness.
@@ -214,9 +241,7 @@ def get_predicted_num_stars(
     return n_totstars
 
 
-def get_predicted_num_stars_simulate(
-    massmult_info, bphysparams, bphysmod, physmodage
-):
+def get_predicted_num_stars_simulate(massmult_info, bphysparams, bphysmod, physmodage):
     """
     Calculate the expected number of stars based on the physics model as
     given on the BEAST model grid including completeness.
