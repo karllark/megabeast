@@ -336,7 +336,7 @@ def _get_best_fit_params(sampler):
     return fit_params_best
 
 
-def fit_ensemble(megabeast_model, star_lnpgriddata, beast_moddata):
+def fit_ensemble(megabeast_model, star_lnpgriddata, beast_moddata, nsteps=300):
     """
     Run the MegaBEAST on a single set of BEAST results.
 
@@ -364,15 +364,15 @@ def fit_ensemble(megabeast_model, star_lnpgriddata, beast_moddata):
 
     sparams = megabeast_model.start_params()[1]
 
-    # result = op.minimize(
-    # result = op.least_squares(
-    #    chi2,
-    #    sparams,
-    #    args=(megabeast_model, star_lnpgriddata, beast_moddata),
-    #    ftol=1e-20,
-    #    xtol=1e-20
-    #    method="Nelder-Mead",
-    # )
+    result = scipy.optimize.minimize(
+        chi2,
+        sparams,
+        args=(megabeast_model, star_lnpgriddata, beast_moddata),
+        #ftol=1e-20,
+        #xtol=1e-20,
+        method="Nelder-Mead",
+    )
+    return result["x"]
     # exit()
 
     ndim, nwalkers = len(sparams), 5 * len(sparams)
@@ -382,7 +382,6 @@ def fit_ensemble(megabeast_model, star_lnpgriddata, beast_moddata):
     sampler = emcee.EnsembleSampler(
         nwalkers, ndim, lnprob, args=(megabeast_model, star_lnpgriddata, beast_moddata)
     )
-    nsteps = 300
     sampler.run_mcmc(pos, nsteps, progress=True)
     # samples = sampler.get_chain()
 
